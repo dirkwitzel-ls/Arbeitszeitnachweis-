@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Arbeitszeitnachweis – Fasssauna Montage</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #2c4a6e;
+    --blue-light: #e8f0fb;
+    --orange: #e07b2a;
+    --orange-light: #fff3e8;
+    --bg: #f0f2f6;
+    --white: #ffffff;
+    --border: #e2e6ec;
+    --text: #1a2232;
+    --muted: #6b7a92;
+    --red: #d64545;
+    --green: #2a7d4f;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(44,74,110,0.08);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 40px;
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--blue);
+    color: white;
+    padding: 20px 20px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 700px;
+    margin: 0 auto;
+    gap: 12px;
+  }
+  .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+  .header-total {
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .header-total span { font-size: 18px; font-weight: 800; display: block; }
+
+  /* MAIN */
+  .main { max-width: 700px; margin: 0 auto; padding: 16px 14px 0; }
+
+  /* CARDS */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 14px;
+  }
+
+  /* INPUTS */
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .field { flex: 1; min-width: 120px; }
+  .field.full { flex: 1 1 100%; }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="month"],
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--white);
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  input:focus, select:focus { border-color: var(--blue); }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a92' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  /* ARBEITSZEIT BADGE */
+  .az-badge {
+    background: var(--blue-light);
+    color: var(--blue);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+
+  /* CHIPS */
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .chip {
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--white);
+    color: var(--muted);
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .chip:active { transform: scale(0.96); }
+  .chip.active-blue { background: var(--blue); border-color: var(--blue); color: white; }
+  .chip.active-orange { background: var(--orange); border-color: var(--orange); color: white; }
+
+  /* BUTTONS */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.2px;
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-blue { background: var(--blue); color: white; }
+  .btn-orange { background: var(--orange); color: white; }
+  .btn-outline {
+    background: transparent;
+    color: var(--blue);
+    border: 1.5px solid var(--blue);
+  }
+  .btn-red { background: var(--red); color: white; }
+  .btn-green { background: var(--green); color: white; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-row .btn { flex: 1; }
+
+  /* ENTRIES */
+  .entry {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .entry:last-child { border-bottom: none; padding-bottom: 0; }
+  .entry-main { flex: 1; min-width: 0; }
+  .entry-date { font-weight: 700; font-size: 14px; color: var(--text); }
+  .entry-time { color: var(--blue); font-weight: 600; font-size: 13px; margin-left: 8px; }
+  .entry-kunde { font-size: 13px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .entry-tags { margin-top: 4px; display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag {
+    background: var(--bg);
+    color: var(--muted);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .entry-del {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .entry-del:active { background: #fee; border-color: var(--red); color: var(--red); }
+
+  /* BOTTOM ACTION BAR */
+  .action-bar {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .action-bar-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 12px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  /* SECTION */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .total-pill {
+    background: var(--orange-light);
+    color: var(--orange);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  @media (max-width: 420px) {
+    .header-total span { font-size: 15px; }
+    .header-title { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <div class="header-title">⏱ Arbeitszeitnachweis</div>
+      <div class="header-sub">Fasssauna Montage</div>
+    </div>
+    <div class="header-total" id="headerTotal">
+      Gesamt<span id="headerTotalVal">0:00</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Monat & Mitarbeiter -->
+  <div class="card">
+    <div class="card-title">Nachweis</div>
+    <div class="row">
+      <div class="field">
+        <label>Monat</label>
+        <input type="month" id="monat">
+      </div>
+      <div class="field">
+        <label>Mitarbeiter</label>
+        <input type="text" id="mitarbeiter" value="Dirk Witzel">
+      </div>
+    </div>
+  </div>
+
+  <!-- Neuer Eintrag -->
+  <div class="card">
+    <div class="card-title">+ Neuer Eintrag</div>
+
+    <div class="row">
+      <div class="field">
+        <label>Datum</label>
+        <input type="date" id="datum">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Beginn</label>
+        <input type="time" id="beginn" value="07:00">
+      </div>
+      <div class="field">
+        <label>Ende</label>
+        <input type="time" id="ende" value="16:00">
+      </div>
+      <div class="field" style="max-width:110px">
+        <label>Pause (Min)</label>
+        <input type="number" id="pause" value="60" min="0" step="15">
+      </div>
+    </div>
+
+    <div id="azBadge" class="az-badge" style="display:none"></div>
+
+    <label style="margin-bottom:8px">Aufgaben</label>
+    <div class="chip-group" id="aufgabenChips"></div>
+    <div class="divider"></div>
+
+    <label style="margin-bottom:8px">Saunatyp</label>
+    <div class="chip-group" id="saunatypChips"></div>
+    <div class="divider"></div>
+
+    <div class="row">
+      <div class="field">
+        <label>Arbeitsort</label>
+        <input type="text" id="ort" placeholder="z.B. Berlin">
+      </div>
+      <div class="field">
+        <label>Kunde *</label>
+        <input type="text" id="kunde" placeholder="Kundenname">
+      </div>
+    </div>
+
+    <button class="btn btn-blue" id="addBtn" disabled>Eintrag hinzufügen</button>
+  </div>
+
+  <!-- Einträge -->
+  <div class="card" id="entriesCard" style="display:none">
+    <div class="section-header">
+      <div class="card-title" style="margin:0" id="entriesCount">Einträge</div>
+      <div class="total-pill" id="totalPill">0:00 Std.</div>
+    </div>
+    <div id="entriesList"></div>
+  </div>
+
+  <!-- Aktionen -->
+  <div class="action-bar" id="actionBar" style="display:none">
+    <div class="action-bar-title">Exportieren & Speichern</div>
+    <div class="btn-row">
+      <button class="btn btn-orange" id="pdfBtn">📄 PDF erstellen</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-outline" id="saveBtn">💾 Daten speichern</button>
+      <button class="btn btn-outline" id="loadBtn">📂 Daten laden</button>
+    </div>
+    <input type="file" id="loadFile" accept=".json" style="display:none">
+  </div>
+
+  <!-- Immer sichtbar: Laden -->
+  <div class="btn-row" style="margin-bottom:14px" id="loadAlwaysRow">
+    <button class="btn btn-outline" id="loadBtnAlways">📂 Gespeicherte Daten laden</button>
+    <input type="file" id="loadFileAlways" accept=".json" style="display:none">
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+const AUFGABEN = ["Anfahrt zum Kunden", "Vorladen", "Aufbau", "Vorladen & Aufbau", "Rückreise"];
+const SAUNATYPEN = ["Fasssauna (Standard)", "XL Vorraum", "Suri", "Palkkio", "Premium"];
+
+let entries = [];
+let selectedAufgaben = [];
+let selectedSaunatyp = "";
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const today = new Date();
+  document.getElementById("datum").value = today.toISOString().split("T")[0];
+  document.getElementById("monat").value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}`;
+
+  buildChips();
+  bindEvents();
+  render();
+});
+
+// ─── Build Chips ─────────────────────────────────────────────────────────────
+function buildChips() {
+  const aufgabenEl = document.getElementById("aufgabenChips");
+  AUFGABEN.forEach(a => {
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = a;
+    btn.onclick = () => {
+      if (selectedAufgaben.includes(a)) selectedAufgaben = selectedAufgaben.filter(x => x !== a);
+      else selectedAufgaben.push(a);
+      updateAufgabenChips();
+    };
+    aufgabenEl.appendChild(btn);
+  });
+
+  const saunaEl = document.getElementById("saunatypChips");
+  SAUNATYPEN.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = t;
+    btn.onclick = () => {
+      selectedSaunatyp = selectedSaunatyp === t ? "" : t;
+      updateSaunaChips();
+    };
+    saunaEl.appendChild(btn);
+  });
+}
+
+function updateAufgabenChips() {
+  document.querySelectorAll("#aufgabenChips .chip").forEach((btn, i) => {
+    btn.className = "chip" + (selectedAufgaben.includes(AUFGABEN[i]) ? " active-blue" : "");
+  });
+}
+
+function updateSaunaChips() {
+  document.querySelectorAll("#saunatypChips .chip").forEach((btn, i) => {
+    btn.className = "chip" + (selectedSaunatyp === SAUNATYPEN[i] ? " active-orange" : "");
+  });
+}
+
+// ─── Events ──────────────────────────────────────────────────────────────────
+function bindEvents() {
+  ["beginn","ende","pause"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateAZBadge);
+  });
+  document.getElementById("kunde").addEventListener("input", updateAddBtn);
+  document.getElementById("addBtn").addEventListener("click", addEntry);
+  document.getElementById("pdfBtn").addEventListener("click", exportPDF);
+  document.getElementById("saveBtn").addEventListener("click", saveJSON);
+  document.getElementById("loadBtn").addEventListener("click", () => document.getElementById("loadFile").click());
+  document.getElementById("loadFile").addEventListener("change", loadJSON);
+  document.getElementById("loadBtnAlways").addEventListener("click", () => document.getElementById("loadFileAlways").click());
+  document.getElementById("loadFileAlways").addEventListener("change", loadJSON);
+}
+
+// ─── Time Utils ──────────────────────────────────────────────────────────────
+const pad = n => String(n).padStart(2,"0");
+
+function calcMinutes(beginn, ende, pauseMin) {
+  if (!beginn || !ende) return null;
+  const [sh,sm] = beginn.split(":").map(Number);
+  const [eh,em] = ende.split(":").map(Number);
+  const total = (eh*60+em) - (sh*60+sm) - Number(pauseMin);
+  return total > 0 ? total : null;
+}
+
+function minsToStr(mins) {
+  if (!mins) return null;
+  return `${Math.floor(mins/60)}:${pad(mins%60)}`;
+}
+
+function formatDate(str) {
+  if (!str) return "";
+  const [y,m,d] = str.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+// ─── AZ Badge ────────────────────────────────────────────────────────────────
+function updateAZBadge() {
+  const mins = calcMinutes(
+    document.getElementById("beginn").value,
+    document.getElementById("ende").value,
+    document.getElementById("pause").value
+  );
+  const badge = document.getElementById("azBadge");
+  if (mins) {
+    badge.style.display = "inline-block";
+    badge.textContent = `⏱ ${minsToStr(mins)} Std.`;
+  } else {
+    badge.style.display = "none";
+  }
+  updateAddBtn();
+}
+
+function updateAddBtn() {
+  const kunde = document.getElementById("kunde").value.trim();
+  document.getElementById("addBtn").disabled = !kunde;
+}
+
+// ─── Add Entry ───────────────────────────────────────────────────────────────
+function addEntry() {
+  const entry = {
+    id: Date.now(),
+    datum: document.getElementById("datum").value,
+    beginn: document.getElementById("beginn").value,
+    ende: document.getElementById("ende").value,
+    pause: Number(document.getElementById("pause").value),
+    ort: document.getElementById("ort").value.trim(),
+    aufgaben: [...selectedAufgaben],
+    saunatyp: selectedSaunatyp,
+    kunde: document.getElementById("kunde").value.trim(),
+  };
+  entries.push(entry);
+
+  // Reset form (keep datum, mitarbeiter, ort)
+  document.getElementById("beginn").value = "07:00";
+  document.getElementById("ende").value = "16:00";
+  document.getElementById("pause").value = "60";
+  document.getElementById("kunde").value = "";
+  selectedAufgaben = [];
+  selectedSaunatyp = "";
+  updateAufgabenChips();
+  updateSaunaChips();
+  updateAZBadge();
+
+  render();
+  showToast("Eintrag hinzugefügt ✓");
+  // Scroll to entries
+  setTimeout(() => document.getElementById("entriesCard").scrollIntoView({behavior:"smooth"}), 100);
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function render() {
+  const totalMins = entries.reduce((acc, e) => acc + (calcMinutes(e.beginn, e.ende, e.pause) || 0), 0);
+  const totalStr = minsToStr(totalMins) || "0:00";
+
+  document.getElementById("headerTotalVal").textContent = totalStr;
+  document.getElementById("totalPill").textContent = `${totalStr} Std.`;
+
+  const hasEntries = entries.length > 0;
+  document.getElementById("entriesCard").style.display = hasEntries ? "block" : "none";
+  document.getElementById("actionBar").style.display = hasEntries ? "block" : "none";
+  document.getElementById("loadAlwaysRow").style.display = hasEntries ? "none" : "flex";
+  document.getElementById("entriesCount").textContent = `Einträge (${entries.length})`;
+
+  const list = document.getElementById("entriesList");
+  list.innerHTML = "";
+  entries.forEach((e, i) => {
+    const mins = calcMinutes(e.beginn, e.ende, e.pause);
+    const az = minsToStr(mins);
+    const tags = [...e.aufgaben, e.saunatyp].filter(Boolean);
+
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `
+      <div class="entry-main">
+        <div class="entry-date">
+          ${formatDate(e.datum)}
+          ${az ? `<span class="entry-time">${az} Std.</span>` : ""}
+        </div>
+        <div class="entry-kunde">${e.kunde}${e.ort ? " · " + e.ort : ""} &nbsp;·&nbsp; ${e.beginn}–${e.ende}${e.pause ? `, ${e.pause} Min. Pause` : ""}</div>
+        ${tags.length ? `<div class="entry-tags">${tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>` : ""}
+      </div>
+      <button class="entry-del" data-id="${e.id}">✕</button>
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll(".entry-del").forEach(btn => {
+    btn.addEventListener("click", () => {
+      entries = entries.filter(e => String(e.id) !== btn.dataset.id);
+      render();
+    });
+  });
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), duration);
+}
+
+// ─── JSON Save/Load ──────────────────────────────────────────────────────────
+function saveJSON() {
+  const monat = document.getElementById("monat").value;
+  const mitarbeiter = document.getElementById("mitarbeiter").value;
+  const data = { monat, mitarbeiter, entries };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `AZN_${monat}_${mitarbeiter.replace(/\s+/g,"_")}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Datei gespeichert ✓");
+}
+
+function loadJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.monat) document.getElementById("monat").value = data.monat;
+      if (data.mitarbeiter) document.getElementById("mitarbeiter").value = data.mitarbeiter;
+      if (Array.isArray(data.entries)) entries = data.entries;
+      render();
+      showToast(`${entries.length} Einträge geladen ✓`);
+    } catch {
+      showToast("Fehler beim Laden der Datei ✗");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+}
+
+// ─── PDF Export ──────────────────────────────────────────────────────────────
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+  const monat = document.getElementById("monat").value;
+  const mitarbeiter = document.getElementById("mitarbeiter").value;
+  const [my, mm] = monat.split("-");
+  const monatName = new Date(Number(my), Number(mm)-1, 1)
+    .toLocaleString("de-DE", { month: "long", year: "numeric" });
+
+  // Header bar
+  doc.setFillColor(44, 74, 110);
+  doc.rect(0, 0, 297, 22, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("Arbeitszeitnachweis", 14, 10);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${monatName}   ·   ${mitarbeiter}`, 14, 17);
+
+  // Total top right
+  const totalMins = entries.reduce((acc, e) => acc + (calcMinutes(e.beginn, e.ende, e.pause) || 0), 0);
+  const totalStr = minsToStr(totalMins) || "0:00";
+  doc.setFontSize(9);
+  doc.text(`Gesamtarbeitszeit: ${totalStr} Std.`, 283, 10, { align: "right" });
+
+  // Table
+  const tableRows = entries.map((e, i) => {
+    const mins = calcMinutes(e.beginn, e.ende, e.pause);
+    return [
+      i + 1,
+      formatDate(e.datum),
+      e.beginn,
+      e.ende,
+      `${e.pause} Min.`,
+      minsToStr(mins) || "–",
+      e.ort || "–",
+      [...e.aufgaben, e.saunatyp].filter(Boolean).join(", ") || "–",
+      e.kunde,
+    ];
+  });
+
+  doc.autoTable({
+    startY: 26,
+    head: [["#", "Datum", "Beginn", "Ende", "Pause", "Arbeitszeit", "Ort", "Aufgaben / Typ", "Kunde"]],
+    body: tableRows,
+    styles: { fontSize: 9, cellPadding: { top: 3, bottom: 3, left: 4, right: 4 }, textColor: [26,34,50] },
+    headStyles: { fillColor: [44,74,110], textColor: 255, fontStyle: "bold", fontSize: 9 },
+    alternateRowStyles: { fillColor: [240,242,246] },
+    columnStyles: {
+      0: { cellWidth: 8, halign: "center" },
+      1: { cellWidth: 24 },
+      2: { cellWidth: 18 },
+      3: { cellWidth: 18 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 24 },
+      6: { cellWidth: 28 },
+      7: { cellWidth: 70 },
+      8: { cellWidth: "auto" },
+    },
+    margin: { left: 14, right: 14 },
+  });
+
+  // Total row
+  const finalY = doc.lastAutoTable.finalY + 6;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(44, 74, 110);
+  doc.text(`Gesamtarbeitszeit: ${totalStr} Std.`, 283, finalY, { align: "right" });
+
+  // Signature fields
+  const sigY = Math.min(finalY + 20, 185);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.line(14, sigY, 90, sigY);
+  doc.text("Datum, Unterschrift Mitarbeiter", 14, sigY + 5);
+  doc.line(120, sigY, 196, sigY);
+  doc.text("Datum, Unterschrift Vorgesetzter", 120, sigY + 5);
+
+  // Filename
+  const filename = `AZN_${monat}_${mitarbeiter.replace(/\s+/g,"_")}.pdf`;
+
+  // iOS detection → Blob URL (Share Sheet / iScanner)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isIOS || isSafari) {
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    // Try download attribute first, fall back to new tab
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    showToast("PDF geöffnet – über Teilen in iScanner importieren", 3500);
+  } else {
+    doc.save(filename);
+    showToast("PDF gespeichert ✓");
+  }
+}
+</script>
+</body>
+</html>
